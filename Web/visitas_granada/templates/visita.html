@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <style>
+    #mapid { height: 410px; }
+  </style>
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Aumentar el número de likes
+      $("#botonLike").click(function() {
+        let valor = parseInt($("#likes").html());
+        actualizar_likes(valor+1);
+      });
+
+      // Disminuir número de likes
+      $("#botonDislike").click(function() {
+        let valor = parseInt($("#likes").html());
+        actualizar_likes(valor-1);
+      });
+
+      // Actualiza el número de likes con AJAX
+      function actualizar_likes(nuevo_valor) {
+        $.ajax({
+          'url': "{% url 'likes' visita.id %}",
+          'type': 'PUT',
+          'dataType': 'json',
+          'data': JSON.stringify({'likes':nuevo_valor}),
+          'success': function(respuesta) {
+            $("#likes").html(respuesta.likes);
+          }
+        })
+      }
+    }); // fin función document.ready
+  </script>
+
+  <!--ventana modal para el borrado de visitas-->
+  <div class="modal fade" id="modalBorrar" tabindex="-1" role="dialog" aria-labelledby="modalBorrar" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div id="modalBorrarContenido" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalBorrarTitulo">Borrar visita</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">¿Está seguro de que quiere eliminar la visita? Esta acción no se puede deshacer.</div>
+        <div class="modal-footer">
+          <button id="botonCancelarBorrado" type="button" class="btn" data-dismiss="modal">Cancelar</button>
+          <a class="btn btn-danger" href="{% url 'borrar_visita' visita.id %}">Eliminar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-4">
+    <div id="mapid">
+      <script>
+        var coordenadas = null;
+        $.ajax({
+          'url': "{% url 'get_coordenadas_visita' visita.nombre %}",
+          'type': 'GET',
+          'dataType': 'json',
+          'async': false,
+          'success': function(respuesta) {
+            coordenadas = respuesta.coordenadas;
+          }
+        })
+        var mymap = L.map('mapid').setView(coordenadas, 12);
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributor',
+            maxZoom: 10,
+            id: 'mapbox/streets-v11',
+            tileSize: 512,
+            zoomOffset: -1,
+            accessToken: 'your.mapbox.access.token'
+        }).addTo(mymap);
+        var marker = L.marker(coordenadas).addTo(mymap);
+      </script>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col">
+      {% if user.is_staff %}
+        <a id="editar" class="btn btn-default" style="color:#343a40;background:white;border:1px solid #f04e64;margin-left:10px;float:right" href="{% url 'editar_visita' visita.id %}">Editar <i class="fa fa-pencil"></i></a>
+        <button id="eliminar" type="button" style="color:#343a40;background:white;border:1px solid #f04e64;float:right" class="btn btn-default" data-toggle="modal" data-target="#modalBorrar">Eliminar <i class="fa fa-trash-o"></i></button>
+      {% endif %}
+    </div>
+    <h3><strong>{{ visita.nombre }}</strong></h3>
+
+    <div class="row">
+      <div class="col-3">
+        <img style="width:20px" src="{{ MEDIA_URL }}/fotos/like.jpeg" alt="likes">
+      </div>
+      <div class="col-3" style="margin-left:-165px; margin-top:2px">
+        <p id="likes" style="color:#f04f64">{{ visita.likes }}</p>
+      </div>
+      <div class="col" style="margin-top:-5px; margin-left:-140px">
+        <button id="botonLike" type="button" class="btn btn-default"><i class="fa fa-thumbs-o-up"></i></button>
+        <button id="botonDislike" type="button" class="btn btn-default" style="margin-left:-15px"><i class="fa fa-thumbs-o-down"></i></button>
+      </div>
+    </div>
+
+    <h5>{{ visita.descripción }}</h5>
+    <p><img class="img-thumbnail" style="width:50%" src="{{ MEDIA_URL }}{{ visita.foto.name }}" alt="{{ visita.nombre }}"></p>
+    <!--Comentarios-->
+    <h4 style="margin-top:40px">Comentarios</h4>
+    {% if comentarios %}
+      {% for comentario in comentarios %}
+        {% if comentario.visita.nombre == visita.nombre %}
+        <div class="card" id="comentario_{{ comentario.id }}" style="margin:15px">
+          <div class="card-body">
+            <p><img class="img-thumbnail" style="width: 30px;margin-right: 10px;" src="{{ MEDIA_URL }}/fotos/user.png"> {{ comentario.texto }}</p>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+        <p>No hay comentarios disponibles.</p>
+    {% endif %}
+  {% endblock %}
+  </div>

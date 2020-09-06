@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+    <title>Visitas Granada</title>
+    <style>
+      .modo-noche {
+        background: black!important;
+        color: white!important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-sm">
+      <!-- Menú superior -->
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" style="font-weight:bold;" href="{% url 'index' %}">Inicio <span class="sr-only">(current)</span></a>
+            </li>
+            {% if user.is_staff %}
+              <li class="nav-item">
+                <a class="nav-link" style="font-weight:bold;" href="{% url 'añadir_visita' %}">Añadir visita <span class="sr-only">(current)</span></a>
+              </li>
+            {% endif %}
+          </ul>
+          <button id="botonModo" type="button" style="color:white" class="btn btn-default"><i class="fa fa-moon-o"></i></button>
+          <div class="nav-item topnav-right">
+            {% if user.is_authenticated %}
+              <a style="color:rgb(230, 171, 186);font-weight:bold;" class="nav-link" href="{% url 'logout' %}">{{ user.username }} <i class="fa fa-sign-out"></i> <span class="sr-only">(current)</span></a>
+            {% else %}
+              <a style="color:rgb(230, 171, 186);font-weight:bold;" class="nav-link" href="{% url 'login' %}">Login <i class="fa fa-sign-in"></i> <span class="sr-only">(current)</span></a>
+            {% endif %}
+          </div>
+        </div>
+      </nav>
+      <!-- Sección del título de la página -->
+      <div id="cabecera" style="margin-bottom:20px;padding:30px; background:lightgrey;" class="header">
+        <h1>Visitas en Granada</h1>
+        <br>
+        <h4>Tenemos {{ n_visitas }} visitas</h4>
+      </div>
+
+      <!-- Mensajes de error -->
+      {% if messages %}
+        {% for message in messages %}
+        <div class="row">
+          <div class="col-12">
+            <div class="alert alert-{{ message.tags }} alert-dismissible text-center" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <strong>{{ message }}</strong>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="row">
+        <!-- Lista con las tarjetas-->
+        {% block content %}
+          <div class="row">
+            <!--Menú lateral -->
+            <div class="col-3">
+              <nav class="sidenav" style="margin-bottom:20px;margin-top:20px;border-radius: 25px;border:1px solid lightgrey; height:100%;">
+                <ul class="custom-scrollbar">
+                  <li>Menú lateral</li>
+                </ul>
+              </nav>
+            </div>
+          {% if visitas %}
+            <div class="col">
+            {% for visita in visitas %}
+              <div style="float: left;width: 33%;padding: 0 10px;" class="column">
+                <div class="card h-100" style="margin-top:20px">
+                  <img class="img-thumbnail" style="height: 15vw;object-fit:cover;"src="{{ MEDIA_URL }}{{ visita.foto.name }}" alt="{{ visita.nombre }}" class="card-img-top">
+                  <div id="tarjeta_{{ visita.id }}" class="card-body">
+                    <h5 class="card-title text-center">{{ visita.nombre }}</h5>
+                    <!--De esta forma llamamos a la función url utilizando el fichero urls.py -->
+                    <div class="text-center">
+                      <a href="{% url 'visita' visita.id %}" class="btn btn-primary">Detalles</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        {% endblock %}
+      </div>
+
+      <script>
+
+        $(document).ready(function() {
+          // Variable para cambiar el icono del botón
+          let modo_nocturno = false;
+          // Modo nocturno
+          $("#botonModo").click(function() {
+              $("body").toggleClass("modo-noche");
+              $("#cabecera").toggleClass("modo-noche");
+              $("#botonLike").toggleClass("modo-noche");
+              $("#botonDislike").toggleClass("modo-noche");
+              $("#botonEditar").toggleClass("modo-noche");
+              $("#botonEliminar").toggleClass("modo-noche");
+              $("#botonCancelar").toggleClass("modo-noche");
+              // Actualizamos el modo actual para cambiar el icono del botón
+              modo_nocturno = !modo_nocturno;
+              if (modo_nocturno) {
+                $("#botonModo").html('<i class="fa fa-sun-o"></i>');
+              }
+              else {
+                $("#botonModo").html('<i class="fa fa-moon-o"></i>');
+              }
+              // Cambiamos el modo a todos los comentarios y tarjetas
+              $("*").each(function() {
+                  if (this.id.includes("comentario") || this.id.includes("tarjeta")) {
+                    document.getElementById(this.id).classList.toggle("modo-noche");
+                  }
+              });
+          });
+
+        }); // fin función document.ready
+      </script>
+  </body>
+</html>

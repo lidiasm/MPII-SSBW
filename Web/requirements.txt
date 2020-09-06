@@ -1,0 +1,6 @@
+Django>=3.0,<4.0
+django-crispy-forms>=1.9
+djangorestframework>=3.11
+djangorestframework-simplejwt>=4.4
+geopy>=1.21
+django-cors-headers>=3.3.0

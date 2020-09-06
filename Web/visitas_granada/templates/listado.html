@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitas</title>
+</head>
+<body>
+  <h1>Listado de visitas</h1>
+  {% if visitas %}
+    <table>
+        {% for visita in visitas %}
+          <hr>
+          <tr>
+            <td>
+              <p><img style="width:150px; border-radius: 50%;" src="{{ MEDIA_URL }}{{ visita.foto.name }}" alt="{{ visita.nombre }}"></p>
+              <p><strong>{{ visita.nombre }}</strong></p>
+              <p>{{ visita.descripción }}</p>
+            </td>
+            <td><p>Likes: {{ visita.likes }}</p></td>
+          </tr>
+          <tr>
+            {% if comentarios %}
+              <table>
+                <tr>
+                  <p><strong>Comentarios</strong></p>
+                  <ul>
+                    {% for comentario in comentarios %}
+                      {% if comentario.visita.nombre == visita.nombre %}
+                        <li>{{ comentario.texto }}</li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                </tr>
+              </table>
+            {% else %}
+                <p>No hay comentarios disponibles.</p>
+            {% endif %}
+          </tr>
+      {% endfor %}
+  </table>
+  {% else %}
+      <p>No hay visitas disponibles.</p>
+  {% endif %}
+
+</body>
+</html>
